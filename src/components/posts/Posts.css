@@ -1,0 +1,9 @@
+.postList {
+  list-style: none;
+  height: 500px;
+  overflow-y: auto;
+}
+
+.postList li {
+  margin: 5px 0px;
+}
