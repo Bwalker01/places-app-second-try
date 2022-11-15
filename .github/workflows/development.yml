@@ -25,7 +25,7 @@ jobs:
         uses: actions/setup-node@v2
         with:
           node-version: ${{ matrix.node-version }}
-          cache: 'npm'
+          cache: "npm"
 
       - name: Install dependencies
         run: npm ci
@@ -34,7 +34,7 @@ jobs:
         run: npx eslint --ext .js src/ --fix-dry-run
 
       - name: Run Tests
-        run:  npm test -- --coverage
+        run: npm test -- --coverage
 
       - name: Upload Coverage
         uses: codecov/codecov-action@v3
@@ -65,7 +65,7 @@ jobs:
       - uses: actions/checkout@v3
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: '0'
+          fetch-depth: "0"
 
       - name: Bump version
         id: taggerBumper
@@ -73,21 +73,21 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           WITH_V: true
-          RELEASE_BRANCHES: 'main'
+          RELEASE_BRANCHES: "main"
           DEFAULT_BUMP: patch
-        
+
   get_commit_sha:
-      name: Get SHA
-      needs: [lint-test, security-checks]
-      runs-on: ubuntu-latest
-      outputs:
-        sha_output: ${{ steps.short_sha_generator.outputs.SHORT_SHA }}
-      steps:
-        - name: Check out code
-          uses: actions/checkout@v3
-        - name: Get short SHA
-          id: short_sha_generator
-          run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+    name: Get SHA
+    needs: [lint-test, security-checks]
+    runs-on: ubuntu-latest
+    outputs:
+      sha_output: ${{ steps.short_sha_generator.outputs.SHORT_SHA }}
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v3
+      - name: Get short SHA
+        id: short_sha_generator
+        run: echo "SHORT_SHA=$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
   push_to_docker:
     name: Push image to docker
@@ -99,12 +99,8 @@ jobs:
       - name: Build and push Docker image
         uses: mr-smithers-excellent/docker-build-push@v5
         with:
-          image: astb01/places-app
+          image: bwalker01/places-app-second-try
           tags: latest, ${{ needs.get_commit_sha.outputs.sha_output }}-SNAPSHOT, ${{ needs.bump_version.outputs.new_tag }}-SNAPSHOT
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-
-
-       
-      

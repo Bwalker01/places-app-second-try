@@ -1,6 +1,6 @@
 FROM node:16 as build
 
-WORKDIR /places-app
+WORKDIR /places-app-second-try
 
 COPY package*.json ./
 
