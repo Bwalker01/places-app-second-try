@@ -1,7 +1,7 @@
-name: Development Workflow
+name: Production Workflow
 
 on:
-  pull_request:
+  push:
     branches:
       - main
 
@@ -52,7 +52,7 @@ jobs:
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
         with:
-          args: --severity-threshold=high
+          args: --severity-threshold=critical
 
   bump_version:
     name: Bump version
@@ -75,6 +75,7 @@ jobs:
           WITH_V: true
           RELEASE_BRANCHES: "main"
           DEFAULT_BUMP: patch
+          PRERELEASE_SUFFIX: ""
 
   get_commit_sha:
     name: Get SHA
@@ -100,7 +101,28 @@ jobs:
         uses: mr-smithers-excellent/docker-build-push@v5
         with:
           image: bwalker01/places-app-second-try
-          tags: ${{ needs.get_commit_sha.outputs.sha_output }}-SNAPSHOT, ${{ needs.bump_version.outputs.new_tag }}-SNAPSHOT
+          tags: latest, ${{ needs.get_commit_sha.outputs.sha_output }}, ${{ needs.bump_version.outputs.new_tag }}
           registry: docker.io
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
+
+  deploy_app:
+    name: Deploy to Production
+    needs: [push_to_docker, bump_version]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v3
+      - name: Install dependencies
+        run: npm ci
+      - name: Build
+        run: npm run build --if-present
+      - name: Inject Version
+        run: |
+          echo "window['appConfig'] = {\"version\": \"${{ needs.bump_version.outputs.new_tag }}\"}" > build/app-config.js
+      - name: Deploy app
+        uses: akhileshns/heroku-deploy@v3.12.12
+        with:
+          heroku_api_key: ${{ secrets.HEROKU_API_KEY }}
+          heroku_email: ${{ secrets.HEROKU_EMAIL }}
+          heroku_app_name: "places-app-prod"
